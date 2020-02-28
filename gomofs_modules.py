@@ -7,9 +7,10 @@ get the data from Gulf of Maine Ocean Forecast System with function get_gomofs
 
 Modification: March 15, 2019
 - added a function(get_gomofs_url_forcast(date,forcastdate=1))
-
 Modification: March 20, 2019
 - updated a way to get gomofs temperature, tht faster than before
+Modification: Feb 28, 2020
+- made a much simpler function "get_gomofs" to get bottom temp and renamed Lei Zhao's as "get_gomofs_zl" 
 """
 import netCDF4
 import datetime
@@ -74,7 +75,47 @@ def get_gomofs_url_forecast(date,forecastdate=True):
     +ymdh[:6]+'/nos.gomofs.fields.'+fstr+'.'+ymdh[:8]+'.'+tstr+'.nc'
     return url
 
-def get_gomofs(date_time,lat,lon,depth='bottom',mindistance=20,autocheck=True,fortype='temperature'):
+def get_gomofs(date_time,lat,lon,depth='bottom',mindistance=20):# JiM's simple version for bottom temp
+    """
+    JiM's simplified version of Lei Zhao's function gets only bottom temp
+    the format time(GMT) is: datetime.datetime(2019, 2, 27, 11, 56, 51, 666857)
+    lat and lon use decimal degrees
+    return the temperature of specify location
+    HARDCODED TO RETURN BOTTOM TEMP
+    """
+    rho_index=0 # for bottom layer
+    if depth==99999:
+        depth='bottom'
+        rho_index=0
+    if not gomofs_coordinaterange(lat,lon):
+        print('lat and lon out of range in gomofs')
+        return np.nan
+    if date_time<datetime.datetime.strptime('2018-07-01 00:00:00','%Y-%m-%d %H:%M:%S'):
+        print('Time out of range, time start :2018-07-01 00:00:00z')
+        return np.nan
+    if date_time>datetime.datetime.utcnow()+datetime.timedelta(days=3): #forecast time under 3 days
+        print('forecast time under 3 days')
+        return np.nan
+    #start download data
+    url=get_gomofs_url(date_time)
+    nc=netCDF4.Dataset(str(url))
+    gomofs_lons=nc.variables['lon_rho'][:]
+    gomofs_lats=nc.variables['lat_rho'][:]
+    gomofs_rho=nc.variables['s_rho']
+    gomofs_h=nc.variables['h']
+    gomofs_temp=nc.variables['temp']
+    #caculate the index of the nearest four points using a "find_nd" function in Lei Zhao's conversion module   
+    target_distance=2*zl.dist(lat1=gomofs_lats[0][0],lon1=gomofs_lons[0][0],lat2=gomofs_lats[0][1],lon2=gomofs_lons[0][1])
+    eta_rho,xi_rho=zl.find_nd(target=target_distance,lat=lat,lon=lon,lats=gomofs_lats,lons=gomofs_lons)
+    
+    if zl.dist(lat1=lat,lon1=lon,lat2=gomofs_lats[eta_rho][xi_rho],lon2=gomofs_lons[eta_rho][xi_rho])>mindistance:
+        print('THE location is out of range')
+        return np.nan
+    temperature=gomofs_temp[0][rho_index][eta_rho][xi_rho]
+    #temperature=float(gomofs_temp[0,rho_index,eta_rho,xi_rho].data)
+    return temperature
+
+def get_gomofs_zl(date_time,lat,lon,depth='bottom',mindistance=20,autocheck=True,fortype='temperature'):
     """
     the format time(GMT) is: datetime.datetime(2019, 2, 27, 11, 56, 51, 666857)
     lat and lon use decimal degrees
