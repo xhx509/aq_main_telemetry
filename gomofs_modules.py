@@ -102,7 +102,8 @@ def get_gomofs(date_time,lat,lon,depth='bottom',mindistance=20):# JiM's simple v
     gomofs_lons=nc.variables['lon_rho'][:]
     gomofs_lats=nc.variables['lat_rho'][:]
     gomofs_rho=nc.variables['s_rho']
-    gomofs_h=nc.variables['h']
+    #gomofs_h=nc.variables['h']
+    gomofs_h=nc.variables['h'][:]
     gomofs_temp=nc.variables['temp']
     #caculate the index of the nearest four points using a "find_nd" function in Lei Zhao's conversion module   
     target_distance=2*zl.dist(lat1=gomofs_lats[0][0],lon1=gomofs_lons[0][0],lat2=gomofs_lats[0][1],lon2=gomofs_lons[0][1])
@@ -112,8 +113,10 @@ def get_gomofs(date_time,lat,lon,depth='bottom',mindistance=20):# JiM's simple v
         print('THE location is out of range')
         return np.nan
     temperature=gomofs_temp[0][rho_index][eta_rho][xi_rho]
+    depth=gomofs_h[eta_rho][xi_rho]
     #temperature=float(gomofs_temp[0,rho_index,eta_rho,xi_rho].data)
-    return temperature
+    #return temperature
+    return temperature,depth
 
 def get_gomofs_zl(date_time,lat,lon,depth='bottom',mindistance=20,autocheck=True,fortype='temperature'):
     """
@@ -180,7 +183,8 @@ def get_gomofs_zl(date_time,lat,lon,depth='bottom',mindistance=20,autocheck=True
                 gomofs_lons=nc.variables['lon_rho'][:]
                 gomofs_lats=nc.variables['lat_rho'][:]
                 gomofs_rho=nc.variables['s_rho']
-                gomofs_h=nc.variables['h']
+                #gomofs_h=nc.variables['h']
+                gomofs_h=nc.variables['h'][:]
                 gomofs_temp=nc.variables['temp']
                 readcheck,changefile=0,0   #if read data successfully, we do not need to loop
                # print('end read data.')
@@ -244,12 +248,12 @@ def get_gomofs_zl(date_time,lat,lon,depth='bottom',mindistance=20,autocheck=True
                 distance_h=gomofs_rho[k]*point_h-depth
                 rho_index=k        
     #estimate the temperature of point location
-    while True:
-        points_temp=[[gomofs_lats[eta_rho,xi_rho],gomofs_lons[eta_rho,xi_rho],gomofs_temp[0,rho_index,eta_rho,xi_rho]],
-             [gomofs_lats[eta_rho,(xi_rho-1)],gomofs_lons[eta_rho,(xi_rho-1)],gomofs_temp[0,rho_index,eta_rho,(xi_rho-1)]],
-             [gomofs_lats[eta_rho,(xi_rho+1)],gomofs_lons[eta_rho,(xi_rho+1)],gomofs_temp[0,rho_index,eta_rho,(xi_rho+1)]],
-             [gomofs_lats[(eta_rho-1),xi_rho],gomofs_lons[(eta_rho-1),xi_rho],gomofs_temp[0,rho_index,(eta_rho-1),xi_rho]],
-             [gomofs_lats[(eta_rho-1),xi_rho],gomofs_lons[(eta_rho-1),xi_rho],gomofs_temp[0,rho_index,(eta_rho-1),xi_rho]]]
+    while True:  
+        points_temp=[[gomofs_lats[eta_rho,xi_rho],gomofs_lons[eta_rho,xi_rho],gomofs_temp[0][rho_index][eta_rho][xi_rho]],
+             [gomofs_lats[eta_rho,(xi_rho-1)],gomofs_lons[eta_rho,(xi_rho-1)],gomofs_temp[0][rho_index][eta_rho,(xi_rho-1)]],
+             [gomofs_lats[eta_rho,(xi_rho+1)],gomofs_lons[eta_rho,(xi_rho+1)],gomofs_temp[0][rho_index][eta_rho][(xi_rho+1)]],             
+             [gomofs_lats[(eta_rho-1),xi_rho],gomofs_lons[(eta_rho-1),xi_rho],gomofs_temp[0][rho_index][(eta_rho-1)][xi_rho]],
+             [gomofs_lats[(eta_rho-1),xi_rho],gomofs_lons[(eta_rho-1),xi_rho],gomofs_temp[0][rho_index][(eta_rho-1)][xi_rho]]]
         break
     temperature=zl.fitting(points_temp,lat,lon)
     # if input depth out of the bottom, print the prompt message
