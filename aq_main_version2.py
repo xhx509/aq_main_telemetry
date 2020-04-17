@@ -28,7 +28,8 @@ if you want change the path and name, please go to the function of main()
 ###############################################
 '''
 import sys
-sys.path.append("/home/jmanning/py/aq_main/aqmain_and_raw_check/aqmain/py/")# add path to homegrown modules needed
+#sys.path.append("/home/jmanning/py/aq_main/aqmain_and_raw_check/aqmain/py/")# add path to homegrown modules needed
+sys.path.append('D:\aq_main_telemetry-master')
 import ftplib
 import os
 import datetime
@@ -41,9 +42,10 @@ import numpy as np
 import json
 import pytz
 import read_functions as rf
-import upload_modules as up
+import numpy as np
+import upload_models as up
 import math
-import create_modules_dictionary as cmd
+import create_models_dictionary as cmd
 
 def c2f(*c):
     """
@@ -72,6 +74,7 @@ def download_raw_file(localpath,ftppath):
     print ('Logging in.')
     print ('Accessing files')
     allfilelisthis=csv_files(list_all_files(localpath)) #get all filename and file path exist
+    
     list_all_ftpfiles(ftp,rootdir=ftppath,localpath=localpath,local_list=allfilelisthis)  #download the new raw data there is not exist in local directory 
     allfilelistnew=csv_files(list_all_files(localpath))  #get all filename and file path exist after update
     files=list(set(allfilelistnew)-set(allfilelisthis)) #get the list of filename and filepath that updated
@@ -131,13 +134,16 @@ def list_all_files(rootdir):
 
 def list_all_ftpfiles(ftp,rootdir,localpath,local_list):
     """get all files' path and name in rootdirectory this is for student drifter"""
-
+    print ('rootdir='+rootdir)
     ftp.cwd(rootdir)
+    #print (rootdir,localpath,local_list)
     if not os.path.exists(localpath):
         os.makedirs(localpath)
     filelist = ftp.nlst() #List all the directories and files under the folder
     for i in range(0,len(filelist)):
-        filepath = os.path.join(localpath,filelist[i])
+        #filepath = os.path.join(localpath,filelist[i])
+        filepath = localpath+'/'+filelist[i]
+        
         if len(filelist[i].split('.'))!=1:
             if filepath in local_list:
                 continue
@@ -146,9 +152,14 @@ def list_all_ftpfiles(ftp,rootdir,localpath,local_list):
                 ftp.retrbinary('RETR '+ filelist[i], file.write)
                 file.close()
         else:
-            ftp.cwd('/')
-            rootdirnew=os.path.join(rootdir,filelist[i])
+            print (1)
+            print (filelist[i])
+            #ftp.cwd('/')
+            rootdirnew=rootdir+'/'+filelist[i]
+            #rootdirnew=os.path.join(rootdir,filelist[i])
             localpathnew=os.path.join(localpath,filelist[i])
+            print ('rootdirnew='+rootdirnew)
+            print ('localpathnew='+localpathnew)
             list_all_ftpfiles(ftp=ftp,rootdir=rootdirnew,localpath=localpathnew,local_list=local_list)
 
 def list_replace(nlist,old,new):
@@ -383,8 +394,9 @@ def main():
     #HARDCODES
     telemetrystatus_file=os.path.join(parameterpath,'telemetry_status.csv')
     dictionaryfile=os.path.join(dictionarypath,'dictionary.json') # dictionary with endtime,doppio,gomofs,fvcom where each model has vesselname,lat,lon,time,temp
+    print ('rawf_path'+Rawf_path)
     ##############################
-    files=download_raw_file(ftppath='/Raw_Data/checked',localpath=Rawf_path)# UPDATE THE RAW csv FILE
+    files=download_raw_file(ftppath='/Raw_Data/checked/',localpath=Rawf_path)# UPDATE THE RAW csv FILE
     starttime=datetime.datetime.now()-datetime.timedelta(days=30)
     endtime=datetime.datetime.now()
     telemetrystatus_df=rf.read_telemetrystatus(path_name=telemetrystatus_file)
@@ -405,4 +417,3 @@ def main():
     ##############################
 if __name__=='__main__':
     main()
-
