@@ -61,9 +61,10 @@ def plot_aq(fn,path,allfileimg,percent):
 #    df.index=df.index-pd.tseries.timedeltas.to_timedelta(4, unit='h')  #, chage it to UTC time
     df['yd']=df.index.dayofyear+df.index.hour/24.+df.index.minute/60./24.+df.index.second/60/60./24.-1.0 #creates a yrday0 field
     
-    df=df.loc[(df['Depth(m)']>10.0)]
-    df=df.loc[(df['Depth(m)']>percent*np.mean(df['Depth(m)']))]  # get rid of shallow data
-    df=df.loc[(df['Depth(m)']>df.mean()['Depth(m)']-3*np.std(df['Depth(m)'])) & (df['Depth(m)']<np.mean(df['Depth(m)'])+3*np.std(df['Depth(m)']))] # reduces time series to deep obs
+    df=df.loc[(df['Depth(m)']>5.0)]
+    df=df.loc[(df['Depth(m)']>percent*np.max(df['Depth(m)']))]  # get rid of shallow data
+    df=df.iloc[3:]
+    #df=df.loc[(df['Depth(m)']>df.mean()['Depth(m)']-3*np.std(df['Depth(m)'])) & (df['Depth(m)']<np.mean(df['Depth(m)'])+3*np.std(df['Depth(m)']))] # reduces time series to deep obs
     if len(df)<10:
         return ''
     for o in list(reversed(range(len(df)))): # usually ,aquetec is collecting data every 1 minute, if the period between two collect above 30 minutes,we get rid of the previous one 

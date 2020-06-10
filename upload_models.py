@@ -17,10 +17,11 @@ def sd2drf_update(local_dir,remote_dir):
         local_dir: local directory
         remote_dir: remote directory,the folder in the student drifters'''
     #determine whether the string of the path is right 
-    if local_dir[0]!='/':
+    if local_dir[0]!='/' and local_dir[0]!='D':
         local_dir='/'+local_dir
     if remote_dir[0]!='/':
         remote_dir='/'+remote_dir
+    print ('local_dir is '+local_dir)
     upflist=zl.list_all_files(local_dir)  # get all file paths and name in local directory
     ftp=ftplib.FTP('66.114.154.52','huanxin','123321')   #logge in student drifters
     print('the number of upload files:'+str(len(upflist)))
@@ -42,11 +43,14 @@ def sd2drf(local_dir,remote_dir,filetype='**',keepfolder=False):
         local_dir: local directory
         remote_dir: remote directory,the folder in the student drifters
         keepfolder: wheather need keep subdirectory, if we need let the value is True'''
-    
+    #print (local_dir)
+    '''
     if local_dir[0]!='/':
         local_dir='/'+local_dir
+    '''
     if remote_dir[0]!='/':
         remote_dir='/'+remote_dir
+    print (local_dir)
     cdflist=zl.list_all_files(local_dir)
     files=[]
     if filetype=='**':#upload all files
@@ -57,6 +61,7 @@ def sd2drf(local_dir,remote_dir,filetype='**',keepfolder=False):
                 files.append(file)
     ftp=ftplib.FTP('66.114.154.52','huanxin','123321')
     drifterlist=list_ftp_allfiles(remote_dir,ftp) #get all filename and file path in the student drifters 
+    print (drifterlist)
     drflist=[]
     if keepfolder==True:#keep subdirectory
         for i in range(len(drifterlist)):  #change the path, use to detemine which files is not exist in student drifters 

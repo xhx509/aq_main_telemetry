@@ -81,6 +81,7 @@ def download_raw_file(localpath,ftppath):
     ftp.quit() # This is the “polite” way to close a connection
     print ('New files downloaded')
     return files
+    #return files
 
 ###### START FTP SESSION TO THE OLD STUDENTDRIFTERS MACHINE AND DOWNLOAD RAW CSV
 def eastern_to_gmt(filename):
@@ -245,9 +246,11 @@ def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdel
                     lat=df.iloc[line]['lat']  #get the latitude
                     lon=df.iloc[line]['lon']  #get the longitude
                     vessel_number=including[i].split('_')[1]
+                    vessel_name=''
                     for ves in range(len(df_tele_status)):
                         if str(df_tele_status['Vessel#'].iloc[ves])==str(vessel_number):
                                           vessel_name=df_tele_status['Boat'].iloc[ves]
+                    
                     pic_ym=datet.strftime('%Y%m')
                     picturepath=os.path.join(pic_path,vessel_name,pic_ym)
                     try:
@@ -288,7 +291,7 @@ def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdel
                                     <font size="5">
                                     <code>
                                     '''+content+\
-                                    "<br>Click <a href="+link+">here</a> to view the detailed graph."+\
+                                    "<br><img src="+link+" alt="'raw pic'"width="'400'" height="'260'">"+\
                                     '<br><font size="4">C:&nbsp;Celsius&nbsp;&nbsp;F:&nbsp;Fahrenheit''''
                                     </code>
                                     </body>
@@ -310,7 +313,7 @@ def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdel
                         icon='ok-sign'
                     lon_box.append(lon)
                     lat_box.append(lat)
-                    iframe = folium.IFrame(html=html, width=700, height=350)
+                    iframe = folium.IFrame(html=html, width=450, height=500)
 #                    popup = folium.Popup(iframe, max_width=1500)
 #                    iframe = folium.IFrame(html=html)
                     popup = folium.Popup(iframe, max_width=45000)
@@ -403,9 +406,11 @@ def main():
     ##############################
     
     files=download_raw_file(ftppath='/Raw_Data/checked/',localpath=Rawf_path)# UPDATE THE RAW csv FILE
+    print ('files is ')
+    print (files)
     #files=csv_files(list_all_files(Rawf_path))
     #print (files)
-    starttime=datetime.datetime.now()-datetime.timedelta(days=30)
+    starttime=datetime.datetime.now()-datetime.timedelta(days=35)
     endtime=datetime.datetime.now()
     telemetrystatus_df=rf.read_telemetrystatus(path_name=telemetrystatus_file)
     #emolt='http://www.nefsc.noaa.gov/drifter/emolt.dat' # this is the output of combining getap2s.py and getap3.py
@@ -416,7 +421,7 @@ def main():
     print('make png')
     make_png(files,pic_path=pic_path,rootdir=Rawf_path,telemetry_status_df=telemetrystatus_df)# make time series image
     print('upload png file')
-    #up.sd2drf(local_dir=pic_path,remote_dir='/lei_aq_main/all_pic',filetype='png')   #upload the picture to the studentdrifter
+    up.sd2drf(local_dir=pic_path,remote_dir='/lei_aq_main/all_pic',filetype='png')   #upload the picture to the studentdrifter
     print('make html')
 #    #create the dictionary
     cmd.update_dictionary(telemetrystatus_file,starttime,endtime,dictionaryfile)   #that is a function use to update the dictionary

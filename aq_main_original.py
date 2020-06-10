@@ -6,30 +6,24 @@ version2
 Routine to map the realtime eMOLT bottom temps using Leaflets
 Created on Wed Sep  6 13:37:50 2017
 @author: hxu
-
 Modified by Huanxin 9 Oct 2018 to make temperature read degF
 Modified by Lei Zhao in June 2019 to add models and climatology
 Modified by JiM in Dec 2019 & Jan/Feb 2020 to improve readability for NERACOOS transfer
-
 This program include 4 basic applications
 1. Download raw csv files which have been uploaded by 'wifi.py' to studentdrifters.org ("SD" machine)
 2. Look for good csv files and makes plot a graph for each good one
 3. Create "telemetry.html"
 4. Upload this html and the pngs to the new studentdrifters ftp location
-
-
 Notes:
 1. There is a crontab routine run on the SD machine to move html & pngs from ftp to httpdocs
 2. Assumes "telemetry_status.csv" and "dictionary.json" are in the "parameter" directory level with this "py" directory
-
 ###############################################
 NOTICE: The PATHS YOU HAVE TO CHANGE TO MAKE THEM CORRECT
 if you want change the path and name, please go to the function of main()
 ###############################################
 '''
 import sys
-#sys.path.append("/home/jmanning/py/aq_main/aqmain_and_raw_check/aqmain/py/")# add path to homegrown modules needed
-sys.path.append('D:\aq_main_telemetry-master')
+sys.path.append("/home/jmanning/py/aq_main/aqmain_and_raw_check/aqmain/py/")# add path to homegrown modules needed
 import ftplib
 import os
 import datetime
@@ -42,10 +36,9 @@ import numpy as np
 import json
 import pytz
 import read_functions as rf
-import numpy as np
-import upload_models as up
+import upload_modules as up
 import math
-import create_models_dictionary as cmd
+import create_modules_dictionary as cmd
 
 def c2f(*c):
     """
@@ -74,8 +67,7 @@ def download_raw_file(localpath,ftppath):
     print ('Logging in.')
     print ('Accessing files')
     allfilelisthis=csv_files(list_all_files(localpath)) #get all filename and file path exist
-    
-    #list_all_ftpfiles(ftp,rootdir=ftppath,localpath=localpath,local_list=allfilelisthis)  #download the new raw data there is not exist in local directory 
+    list_all_ftpfiles(ftp,rootdir=ftppath,localpath=localpath,local_list=allfilelisthis)  #download the new raw data there is not exist in local directory 
     allfilelistnew=csv_files(list_all_files(localpath))  #get all filename and file path exist after update
     files=list(set(allfilelistnew)-set(allfilelisthis)) #get the list of filename and filepath that updated
     ftp.quit() # This is the “polite” way to close a connection
@@ -134,16 +126,13 @@ def list_all_files(rootdir):
 
 def list_all_ftpfiles(ftp,rootdir,localpath,local_list):
     """get all files' path and name in rootdirectory this is for student drifter"""
-    print ('rootdir='+rootdir)
+
     ftp.cwd(rootdir)
-    #print (rootdir,localpath,local_list)
     if not os.path.exists(localpath):
         os.makedirs(localpath)
     filelist = ftp.nlst() #List all the directories and files under the folder
     for i in range(0,len(filelist)):
-        #filepath = os.path.join(localpath,filelist[i])
-        filepath = localpath+'/'+filelist[i]
-        
+        filepath = os.path.join(localpath,filelist[i])
         if len(filelist[i].split('.'))!=1:
             if filepath in local_list:
                 continue
@@ -152,14 +141,9 @@ def list_all_ftpfiles(ftp,rootdir,localpath,local_list):
                 ftp.retrbinary('RETR '+ filelist[i], file.write)
                 file.close()
         else:
-            print (1)
-            print (filelist[i])
-            #ftp.cwd('/')
-            rootdirnew=rootdir+'/'+filelist[i]
-            #rootdirnew=os.path.join(rootdir,filelist[i])
+            ftp.cwd('/')
+            rootdirnew=os.path.join(rootdir,filelist[i])
             localpathnew=os.path.join(localpath,filelist[i])
-            print ('rootdirnew='+rootdirnew)
-            print ('localpathnew='+localpathnew)
             list_all_ftpfiles(ftp=ftp,rootdir=rootdirnew,localpath=localpathnew,local_list=local_list)
 
 def list_replace(nlist,old,new):
@@ -169,7 +153,7 @@ def list_replace(nlist,old,new):
         _list.append(nlist[i].replace(old,new))
     return _list
 
-    
+
 def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdelta=20): 
     """MAKE TELEMETRY.HTML
     raw_path: the path of store raw files
@@ -255,7 +239,7 @@ def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdel
                         doppio_t,gomofs_t,FVCOM_t,clim_t=dic['Doppio'],dic['GoMOLFs'],dic['FVCOM'],dic['CrmClim']
                     except:
                         doppio_t,gomofs_t,FVCOM_t,clim_t=np.nan,np.nan,np.nan,np.nan
-                    
+
                     #set the value that need display, for example temperature of modules, observed and so on. 
                     content=datet.strftime('%d-%b-%Y  %H:%M')+'<br>Observed temperature: ' +str(round(c2f(float(mean_temp))[0],1)).rjust(4)+'&nbsp;F&nbsp;('+str(round(mean_temp,1)).rjust(4)+'&nbsp;C)'
                     if not (math.isnan(doppio_t) and math.isnan(gomofs_t) and math.isnan(FVCOM_t) and math.isnan(clim_t)):
@@ -288,13 +272,13 @@ def make_html(raw_path,telemetrystatus_file,pic_path,dictionary,htmlpath,df,pdel
                                     <font size="5">
                                     <code>
                                     '''+content+\
-                                    "<br>Click <a href="+link+">here</a> to view the detailed graph."+\
+                                    '<br>Click <a href='+link+'>here</a> to view the detailed graph.'+\
                                     '<br><font size="4">C:&nbsp;Celsius&nbsp;&nbsp;F:&nbsp;Fahrenheit''''
                                     </code>
                                     </body>
                                     </p>
                                     '''   
-                                                      
+
                     if html=='':
                         html='''
                             <p>
@@ -353,18 +337,14 @@ def make_png(files,pic_path,rootdir,telemetry_status_df):
     allfileimg=list_all_files(pic_path)  # use function "list_all_files" to get the list of file's path and name
     telemetry_status_df.index=telemetry_status_df['Boat']
     for m in range(len(files)):        #loop every file, create picture
-        
-        #vessel_name=os.path.dirname(files[m]).split('/')[-2]  For linux
-        vessel_name=os.path.dirname(files[m]).split('\\')[-2]
-        #print (vessel_name)
-        if vessel_name=='D:':
-            continue
+
+        vessel_name=os.path.dirname(files[m]).split('/')[-2]
         try:
             ForM=telemetry_status_df['Fixed vs. Mobile'][vessel_name]
         except:
             vessel_name=vessel_name.replace('_',' ')
             ForM=telemetry_status_df['Fixed vs. Mobile'][vessel_name]
-            
+
         if ForM=='Fixed':
             percent=0.95
         elif ForM=='Mobile':
@@ -373,7 +353,7 @@ def make_png(files,pic_path,rootdir,telemetry_status_df):
             percent=0.85
         imgfile=files[m].replace(rootdir,pic_path)   #create the image file name 
         picture_path,fname=os.path.split(imgfile)   # get the path of imge need to store
-        
+
         pic_name=plot_aq(files[m],picture_path,allfileimg,percent=percent) # plot graph
         if pic_name=='':
             print(pic_name)
@@ -395,28 +375,22 @@ def main():
     Rawf_path=ddir[::-1].replace('py'[::-1],'aq/download'[::-1],1)[::-1]
     pic_path=ddir[::-1].replace('py'[::-1],'aq/aqu_pic'[::-1],1)[::-1]
     htmlpath=ddir[::-1].replace('py'[::-1],'html'[::-1],1)[::-1]
-    print ('htmlpath'+htmlpath)
     #HARDCODES
     telemetrystatus_file=os.path.join(parameterpath,'telemetry_status.csv')
     dictionaryfile=os.path.join(dictionarypath,'dictionary.json') # dictionary with endtime,doppio,gomofs,fvcom where each model has vesselname,lat,lon,time,temp
-    #print ('rawf_path'+Rawf_path)
     ##############################
-    
-    files=download_raw_file(ftppath='/Raw_Data/checked/',localpath=Rawf_path)# UPDATE THE RAW csv FILE
-    #files=csv_files(list_all_files(Rawf_path))
-    #print (files)
+    files=download_raw_file(ftppath='/Raw_Data/checked',localpath=Rawf_path)# UPDATE THE RAW csv FILE
     starttime=datetime.datetime.now()-datetime.timedelta(days=30)
     endtime=datetime.datetime.now()
     telemetrystatus_df=rf.read_telemetrystatus(path_name=telemetrystatus_file)
-    #emolt='http://www.nefsc.noaa.gov/drifter/emolt.dat' # this is the output of combining getap2s.py and getap3.py
-    emolt='http://studentdrifters.org/mingchao/emolt_QCed&no_telemetry.csv' #this is qrqc checked
+    emolt='http://www.nefsc.noaa.gov/drifter/emolt.dat' # this is the output of combining getap2s.py and getap3.py
     print('get emolt df')
     emolt_df=rf.screen_emolt(start_time=starttime,end_time=endtime,path=emolt)#get emolt data 
 #    #run function   
     print('make png')
     make_png(files,pic_path=pic_path,rootdir=Rawf_path,telemetry_status_df=telemetrystatus_df)# make time series image
     print('upload png file')
-    #up.sd2drf(local_dir=pic_path,remote_dir='/lei_aq_main/all_pic',filetype='png')   #upload the picture to the studentdrifter
+    up.sd2drf(local_dir=pic_path,remote_dir='/lei_aq_main/all_pic',filetype='png')   #upload the picture to the studentdrifter
     print('make html')
 #    #create the dictionary
     cmd.update_dictionary(telemetrystatus_file,starttime,endtime,dictionaryfile)   #that is a function use to update the dictionary
@@ -426,4 +400,3 @@ def main():
     ##############################
 if __name__=='__main__':
     main()
-

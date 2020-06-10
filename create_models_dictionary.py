@@ -10,7 +10,7 @@ Modified by JiM in Jan 2020 w/more comments
 import pandas as pd
 from datetime import datetime,timedelta
 import time
-import multipy_modules as mm
+import multipy_models as mm
 import numpy as np
 import json
 import sys
